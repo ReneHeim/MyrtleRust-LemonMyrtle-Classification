@@ -54,7 +54,6 @@ Type <- data.original$Type #Get response variable back
 
 data.wo.noise <- cbind(Type,data.rmv.noise)
 
-results$data.wo.noise <- data.wo.noise
 
 # 2.2 Remove outlier using fda package
 
@@ -92,42 +91,50 @@ plot(myfdata.out)
 outlier.vector <- as.numeric(outlier.mat$outliers)
 data.wo.noise.for.resampling <- data.wo.noise[-outlier.vector, ]
 
-# Spectral resampling --------------------------------------------------------
+# 2.4 Spectral resampling
+
 Type2 <- data.wo.noise.for.resampling[,1]
 data.resamp<-data.wo.noise.for.resampling[,2:2002] #removing Type column
 data.bin <- binning(data.resamp, bin.size=10)
 data.after.bin <- cbind(Type2, as.data.frame(data.bin))
 data.after.bin <- dplyr::rename(data.after.bin, Type = Type2)
 
-# Writing final file without outlier for classification -------------------
+# 2.5 Writing final file without outlier for classification
 
 write.csv(data.after.bin, 'data.wo.out.binned.cut.csv', row.names=FALSE)
 
 ####
-# Creating 1st derivative data --------------------------------------------
+# 3. Transforming spectra into 1st order derivatives and store dataframe
 ####
 
-#Load transposed data.wo.out.binned.cut.csv for hsdar package
-data4Deri <- read.csv("data.wo.out.binned.cut.transposed.csv", sep=",") #I transposed this file outside of R using xcl. Could not create the correct format using R.
+# 3.1 Create data for spectral library
 
-#Create data matrix
-myspec <- t(data4Deri[,2:681])
-myspec.t <- t(myspec)
-spectra <- speclib(myspec.t,data4Deri$Wavelength)
+data.new = as.matrix(setNames(data.frame(t(data.after.bin[,-1])), data.after.bin[,1]))
+rownames(data.new) <-  c()
 
-#Splitting rownames stored in spectra@ID to create attributes
-attributes <- attribute(spectra)
-mySamples<-t(as.data.frame(strsplit(spectra@ID, ".", fixed="T")))
-attributes <- data.frame(sampleID=mySamples[,2], Type=mySamples[,1])
-attribute(spectra) <- attributes
+# 3.2 Create wavelength object for spectral library
 
-#Test if spectral object is functional
+Wavelength <- colnames(data.after.bin[,2:202])
+Wavelength <- as.numeric(Wavelength)
+
+# 3.3 Create spectral library "spectra"
+
+spectra <- speclib(data.new,Wavelength)
+
+# 3.4 Create attribute object for spectra
+mat <- as.matrix(data.after.bin$Type)
+colnames(mat) <- c("Type")
+
+attribute(spectra) <- mat
+
+# 3.5 Test if spectral object is functional
+
 str(spectra)
 He <- subset(spectra, Type == "Healthy")
 Tr <- subset(spectra, Type == "Treated")
 Un <- subset(spectra, Type == "Untreated")
 
-#Calculate and export 1st derivative data table
+# 3.6 Calculate and export 1st derivative data table
 d1 <- derivative.speclib(spectra)
 
 He.D <- subset(d1, Type == "Healthy")
@@ -145,7 +152,7 @@ write.csv(derivative.data, '1st.Derivative.Spectra.cleaned.csv', row.names=FALSE
 ################################################################################################
 
 ####
-#
+# 4. 
 ####
 
 data4RF.clean.normal <- read.csv('Input/data.wo.out.binned.cut.csv')
