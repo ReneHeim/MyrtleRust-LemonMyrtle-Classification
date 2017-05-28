@@ -15,20 +15,16 @@
 # 1. Loading Packages and Original Data
 ####
 
-library(dplyr)
 library(hsdar)
-library(ggplot2)
-library(funHDDC)
 library(fda) # For Outlier detection
 library(fda.usc) # For Outlier detection
 library(prospectr) # For spectral binning
-library(gdata) 
+library(gdata) #To drop levels of a df
 library(HDclassif)
 library(caret)
 library(reshape2)
 library(gridExtra)
 library(cowplot)
-library(tidyr)
 library(RColorBrewer)
 library(VSURF)
 library(colourpicker)
@@ -37,6 +33,7 @@ library(png)
 library(grid)
 library(rlist)
 library(qpcR)
+library(tidyverse)
 
 data.original <- read.csv('Input_for_C1_AllSpectraABGPlantation_LeafClip.csv', as.is = TRUE, check.names = FALSE)
 
@@ -152,9 +149,30 @@ write.csv(derivative.data, '1st.Derivative.Spectra.cleaned.csv', row.names=FALSE
 ################################################################################################
 
 ####
-# 4. 
+# 4. Random Forest Classification of Primary and 1st order derivative spectra
 ####
 
-data4RF.clean.normal <- read.csv('Input/data.wo.out.binned.cut.csv')
-data4RF.clean.1stDeri <- read.csv('Input/1st.Derivative.Spectra.cleaned.csv')
+
+data4RF.clean.normal <- read.csv('data.wo.out.binned.cut.csv')
+data4RF.clean.1stDeri <- read.csv('1st.Derivative.Spectra.cleaned.csv')
+
+source('D:\\PhD\\R\\Functions\\RandomForest_May2017.r')
+source('D:\\PhD\\R\\Functions\\DropCatVar_Type_RF_May2017.R')
+
+####
+# 4.1 Apply RF on primary spectra
+####
+
+HvsT <- RFsubset(data4RF.clean.normal,"Untreated")
+HvsU <- RFsubset(data4RF.clean.normal,"Treated")
+TvsU <- RFsubset(data4RF.clean.normal,"Healthy")  
+
+allvsall <- RFapply(data4RF.clean.normal,1,1,1)
+HvsT_res <- RFapply(HvsT,1,1,1)
+HvsU_res <- RFapply(HvsU,1,1,1)
+TvsU_res <- RFapply(TvsU,1,1,1)
+
+####
+# 4.2 Apply RF on first order derivative spectra
+####
 
