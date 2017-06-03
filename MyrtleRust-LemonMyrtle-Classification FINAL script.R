@@ -156,23 +156,221 @@ write.csv(derivative.data, '1st.Derivative.Spectra.cleaned.csv', row.names=FALSE
 data4RF.clean.normal <- read.csv('data.wo.out.binned.cut.csv')
 data4RF.clean.1stDeri <- read.csv('1st.Derivative.Spectra.cleaned.csv')
 
-source('D:\\PhD\\R\\Functions\\RandomForest_May2017.r')
-source('D:\\PhD\\R\\Functions\\DropCatVar_Type_RF_May2017.R')
+source('RandomForest_May2017.r') #data split 80:20 as default
+source('DropCatVar_Type_RF_May2017.R')
 
-####
+
 # 4.1 Apply RF on primary spectra
-####
+
 
 HvsT <- RFsubset(data4RF.clean.normal,"Untreated")
 HvsU <- RFsubset(data4RF.clean.normal,"Treated")
 TvsU <- RFsubset(data4RF.clean.normal,"Healthy")  
 
-allvsall <- RFapply(data4RF.clean.normal,1,1,1)
-HvsT_res <- RFapply(HvsT,1,1,1)
-HvsU_res <- RFapply(HvsU,1,1,1)
-TvsU_res <- RFapply(TvsU,1,1,1)
+PrimarySpectra_Results <- list()
+
+PrimarySpectra_Results[[1]] <- RFapply(data4RF.clean.normal,repeats=1,trees=1,seq(1,70,5))
+PrimarySpectra_Results[[2]] <- RFapply(HvsT,repeats=1,trees=1,mtry=seq(1,70,5))
+PrimarySpectra_Results[[3]] <- RFapply(HvsU,repeats=1,trees=1,mtry=seq(1,70,5))
+PrimarySpectra_Results[[4]] <- RFapply(TvsU,repeats=1,trees=1,mtry=seq(1,70,5))
+
+lapply(PrimarySpectra_Results, function(i){  capture.output( print(i) , file="20170528_Results_PrimarySpectra.txt", append=TRUE)})
+
+
+
+# 4.2 Apply RF on first order derivative spectra
+
+
+HvsT.D <- RFsubset(data4RF.clean.1stDeri,"Untreated")
+HvsU.D <- RFsubset(data4RF.clean.1stDeri,"Treated")
+TvsU.D <- RFsubset(data4RF.clean.1stDeri,"Healthy")  
+
+DerivativeSpectra_Results <- list()
+
+PrimarySpectra_Results[[1]] <- RFapply(data4RF.clean.1stDeri,repeats=1,trees=1,seq(1,70,5))
+PrimarySpectra_Results[[2]] <- RFapply(HvsT.D,repeats=1,trees=1,mtry=seq(1,70,5))
+PrimarySpectra_Results[[3]] <- RFapply(HvsU.D,repeats=1,trees=1,mtry=seq(1,70,5))
+PrimarySpectra_Results[[4]] <- RFapply(TvsU.D,repeats=1,trees=1,mtry=seq(1,70,5))
+
+lapply(DerivativeSpectra_Results, function(i){  capture.output( print(i) , file="20170528_Results_DerivativeSpectra.txt", append=TRUE)})
+
+######################################################################################
 
 ####
-# 4.2 Apply RF on first order derivative spectra
+# 5. VSURF (Variable Selection using Random Forest)
+#
+# The feature selection will be applied on both, primary and first-order derivaive
+# spectra, and on all three classes (Healthy, Treated and Infected)
+# and also only on classes present on the plantation (Treated and Infected).
 ####
+
+source('DropCatVar_Type_RF_May2017.R')
+
+# 5.1 Take the subsetted data from 4.1 and 4.2 to get four datasets
+
+Full.Deri <- read.csv('1st.Derivative.Spectra.cleaned.csv')
+Full.Prim <- read.csv('data.wo.out.binned.cut.csv')
+        
+Planta.Deri <- RFsubset(Full.Deri,"Healthy")
+Planta.Prim <- RFsubset(Full.Prim,"Healthy")        
+
+# 5.2 Start feature selection
+VSURF.Results <- list()
+
+VSURF.Results[[1]] <- VSURF(Full.Deri[,2:202], Full.Deri[,1], clusterType = "FORK", ntree = 2000, mtry = 50)
+VSURF.Results[[2]] <- VSURF(Full.Prim[,2:202], Full.Prim[,1], clusterType = "FORK", ntree = 2000, mtry = 50)
+VSURF.Results[[3]] <- VSURF(Planta.Deri[,2:202], Planta.Deri[,1], clusterType = "FORK", ntree = 2000, mtry = 50)
+VSURF.Results[[4]] <- VSURF(Planta.Prim[,2:202], Planta.Deri[,1], clusterType = "FORK", ntree = 2000, mtry = 50)
+
+# 5.3 Save results 
+
+lapply(VSURF.Results, function(i){  capture.output( print(i) , file="20170603_Results_VSURF.txt", append=TRUE)})
+
+saveRDS(VSURF.Results, "VSURF.Results.rds")
+VSURF.Results <- readRDS('VSURF.Results.rds')
+
+# 5.4 Prepare ggplot (Figure X)
+
+source('prepgg_June2017.R')
+
+Full.Deri.gg <- prep.gg(Full.Deri)# needs wide dataset 
+Full.Prim.gg <- prep.gg(Full.Prim)
+Planta.Deri.gg <- prep.gg(Planta.Deri)
+Planta.Prim.gg <- prep.gg(Planta.Prim)
+
+source('export_VSURF_June2017.R')
+
+features.FullDeri <- export.VSURF(VSURF.Results[[1]]$varselect.pred, Full.Deri[,2:202])
+features.FullPrim <- export.VSURF(VSURF.Results[[2]]$varselect.pred, Full.Deri[,2:202])
+features.PlantaDeri <- export.VSURF(VSURF.Results[[3]]$varselect.pred, Full.Deri[,2:202])
+features.PlantaPrim <- export.VSURF(VSURF.Results[[4]]$varselect.pred, Full.Deri[,2:202])
+
+# 5.5 Prepare vlines from features
+
+p1 <-ggplot(Full.Deri.gg, aes(Wavelength, Reflectance, colour = Type))+
+        annotate("rect", xmin = 380, xmax = 450, ymin = -Inf, ymax = Inf, alpha = .2, fill='violet')+
+        annotate("rect", xmin = 450, xmax = 495, ymin = -Inf, ymax = Inf, alpha = .2, fill='blue')+
+        annotate("rect", xmin = 495, xmax = 570, ymin = -Inf, ymax = Inf, alpha = .2, fill='green')+
+        annotate("rect", xmin = 570, xmax = 590, ymin = -Inf, ymax = Inf, alpha = .2, fill='yellow')+
+        annotate("rect", xmin = 590, xmax = 620, ymin = -Inf, ymax = Inf, alpha = .2, fill='orange')+
+        annotate("rect", xmin = 620, xmax = 720, ymin = -Inf, ymax = Inf, alpha = .2, fill='red')+
+        annotate("rect", xmin = 720, xmax = 1300, ymin = -Inf, ymax = Inf, alpha = .2, fill=c("#30070C"))+
+        annotate("rect", xmin = 1300, xmax = 2500, ymin = -Inf, ymax = Inf, alpha = .2, fill='black')+
+        annotate("text", x= 570, y= 5, label="VIS", fontface="bold")+
+        annotate("text", x= 1000, y= 5, label="NIR", fontface="bold")+
+        annotate("text", x= 1900, y= 5, label="SWIR", fontface="bold")+
+        geom_vline(xintercept = features.FullDeri, col = "red", linetype = "solid", size = 1, alpha=.5)+
+        geom_line(size=1)+
+        theme_bw()+
+        scale_x_continuous(breaks=seq(500,2500,300))+
+        labs(x="Wavelength [nm]", y="1st Derivative Reflectance")+
+        scale_color_manual(values=c("navy", "dodgerblue", "purple3"))+
+        scale_y_continuous()+
+        theme(legend.text = element_text(colour="black", size = 12, face = "bold"))+
+        theme(legend.title = element_text(colour="black", size=12, face="bold"))+
+        theme(axis.text = element_text(colour = "black",size=12))+  
+        theme(axis.title.y = element_text(size = 12, angle = 90,face="bold"))+
+        theme(axis.title.x = element_text(size = 12,face="bold"))+
+        #theme(axis.title.x=element_blank(), axis.text.x=element_blank(), axis.ticks.x=element_blank())+
+        theme(legend.position="bottom")+
+        #ggtitle("The Channon+ABG MA") + 
+        theme(plot.title = element_text(lineheight=.8, face="bold", size = 12))
+
+p1
+
+p2 <- ggplot(Full.Prim.gg, aes(Wavelength, Reflectance, colour = Type))+
+        annotate("rect", xmin = 380, xmax = 450, ymin = -Inf, ymax = Inf, alpha = .2, fill='violet')+
+        annotate("rect", xmin = 450, xmax = 495, ymin = -Inf, ymax = Inf, alpha = .2, fill='blue')+
+        annotate("rect", xmin = 495, xmax = 570, ymin = -Inf, ymax = Inf, alpha = .2, fill='green')+
+        annotate("rect", xmin = 570, xmax = 590, ymin = -Inf, ymax = Inf, alpha = .2, fill='yellow')+
+        annotate("rect", xmin = 590, xmax = 620, ymin = -Inf, ymax = Inf, alpha = .2, fill='orange')+
+        annotate("rect", xmin = 620, xmax = 720, ymin = -Inf, ymax = Inf, alpha = .2, fill='red')+
+        annotate("rect", xmin = 720, xmax = 1300, ymin = -Inf, ymax = Inf, alpha = .2, fill=c("#30070C"))+
+        annotate("rect", xmin = 1300, xmax = 2500, ymin = -Inf, ymax = Inf, alpha = .2, fill='black')+
+        annotate("text", x= 570, y= 25, label="VIS",  fontface="bold")+
+        annotate("text", x= 1000, y= 25, label="NIR",  fontface="bold")+
+        annotate("text", x= 1900, y= 25, label="SWIR",  fontface="bold")+
+        geom_vline(xintercept = features.FullPrim, col = "red", linetype = "solid", size = 1, alpha=.5)+
+        geom_line(size=1)+
+        theme_bw()+
+        scale_x_continuous(breaks=seq(500,2500,300))+
+        labs(x="Wavelength [nm]", y="Reflectance [%]")+
+        scale_color_manual(values=c("navy", "dodgerblue", "purple3"))+
+        scale_y_continuous()+
+        theme(legend.text = element_text(colour="black", size = 12, face = "bold"))+
+        theme(legend.title = element_text(colour="black", size=12, face="bold"))+
+        theme(axis.text = element_text(colour = "black",size=12))+  
+        theme(axis.title.y = element_text(size = 12, angle = 90,face="bold"))+
+        theme(axis.title.x = element_text(size = 12,face="bold"))+
+        #theme(axis.title.x=element_blank(), axis.text.x=element_blank(), axis.ticks.x=element_blank())+
+        theme(legend.position="none")+
+        #ggtitle("Plantation + Botanical Garden") + 
+        theme(plot.title = element_text(lineheight=.8, face="bold", size = 12))
+
+p2
+
+p3 <- ggplot(Planta.Deri.gg, aes(Wavelength, Reflectance, colour = Type))+
+        annotate("rect", xmin = 380, xmax = 450, ymin = -Inf, ymax = Inf, alpha = .2, fill='violet')+
+        annotate("rect", xmin = 450, xmax = 495, ymin = -Inf, ymax = Inf, alpha = .2, fill='blue')+
+        annotate("rect", xmin = 495, xmax = 570, ymin = -Inf, ymax = Inf, alpha = .2, fill='green')+
+        annotate("rect", xmin = 570, xmax = 590, ymin = -Inf, ymax = Inf, alpha = .2, fill='yellow')+
+        annotate("rect", xmin = 590, xmax = 620, ymin = -Inf, ymax = Inf, alpha = .2, fill='orange')+
+        annotate("rect", xmin = 620, xmax = 720, ymin = -Inf, ymax = Inf, alpha = .2, fill='red')+
+        annotate("rect", xmin = 720, xmax = 1300, ymin = -Inf, ymax = Inf, alpha = .2, fill=c("#30070C"))+
+        annotate("rect", xmin = 1300, xmax = 2500, ymin = -Inf, ymax = Inf, alpha = .2, fill='black')+
+        annotate("text", x= 570, y= 5, label="VIS",  fontface="bold")+
+        annotate("text", x= 1000, y= 5, label="NIR",  fontface="bold")+
+        annotate("text", x= 1900, y= 5, label="SWIR",  fontface="bold")+
+        geom_vline(xintercept = features.PlantaDeri, col = "red", linetype = "solid", size = 1, alpha=.5)+
+        geom_line(size=1)+
+        theme_bw()+
+        scale_x_continuous(breaks=seq(500,2500,300))+
+        labs(x="Wavelength [nm]", y="1st Derivative Reflectance")+
+        scale_color_manual(values=c("navy", "dodgerblue", "purple3"))+
+        scale_y_continuous()+
+        theme(legend.text = element_text(colour="black", size = 12, face = "bold"))+
+        theme(legend.title = element_text(colour="black", size=12, face="bold"))+
+        theme(axis.text = element_text(colour = "black",size=12))+  
+        theme(axis.title.y = element_text(size = 12, angle = 90,face="bold"))+
+        theme(axis.title.x = element_text(size = 12,face="bold"))+
+        #theme(axis.title.x=element_blank(), axis.text.x=element_blank(), axis.ticks.x=element_blank())+
+        theme(legend.position="bottom")+
+        #ggtitle("The Channon+ABG MA") + 
+        theme(plot.title = element_text(lineheight=.8, face="bold", size = 12))
+
+p3
+
+p4 <- ggplot(Planta.Prim.gg, aes(Wavelength, Reflectance, colour = Type))+
+        annotate("rect", xmin = 380, xmax = 450, ymin = -Inf, ymax = Inf, alpha = .2, fill='violet')+
+        annotate("rect", xmin = 450, xmax = 495, ymin = -Inf, ymax = Inf, alpha = .2, fill='blue')+
+        annotate("rect", xmin = 495, xmax = 570, ymin = -Inf, ymax = Inf, alpha = .2, fill='green')+
+        annotate("rect", xmin = 570, xmax = 590, ymin = -Inf, ymax = Inf, alpha = .2, fill='yellow')+
+        annotate("rect", xmin = 590, xmax = 620, ymin = -Inf, ymax = Inf, alpha = .2, fill='orange')+
+        annotate("rect", xmin = 620, xmax = 720, ymin = -Inf, ymax = Inf, alpha = .2, fill='red')+
+        annotate("rect", xmin = 720, xmax = 1300, ymin = -Inf, ymax = Inf, alpha = .2, fill=c("#30070C"))+
+        annotate("rect", xmin = 1300, xmax = 2500, ymin = -Inf, ymax = Inf, alpha = .2, fill='black')+
+        annotate("text", x= 570, y= 25, label="VIS",  fontface="bold" )+
+        annotate("text", x= 1000, y= 25, label="NIR",  fontface="bold")+
+        annotate("text", x= 1900, y= 25, label="SWIR",  fontface="bold")+
+        geom_vline(xintercept = features.PlantaPrim, col = "red", linetype = "solid", size = 1, alpha=.5)+
+        geom_line(size=1)+
+        theme_bw()+
+        scale_x_continuous(breaks=seq(500,2500,300))+
+        labs(x="Wavelength [nm]", y="Reflectance [%]")+
+        scale_color_manual(values=c("navy", "dodgerblue", "purple3"))+
+        scale_y_continuous()+
+        theme(legend.text = element_text(colour="black", size = 12, face = "bold"))+
+        theme(legend.title = element_text(colour="black", size=12, face="bold"))+
+        theme(axis.text = element_text(colour = "black",size=12))+  
+        theme(axis.title.y = element_text(size = 12, angle = 90,face="bold"))+
+        theme(axis.title.x = element_text(size = 12,face="bold"))+
+        #theme(axis.title.x=element_blank(), axis.text.x=element_blank(), axis.ticks.x=element_blank())+
+        theme(legend.position="none")+
+        #ggtitle("Plantation Only") + 
+        theme(plot.title = element_text(lineheight=.8, face="bold", size = 12))
+
+
+plot.res <- plot_grid(p2, p4, p1, p3, labels=c("A", "B", 'C', 'D'), ncol = 2, nrow = 2)
+
+ggsave("SpectraCompare_June2017.pdf", plot=plot.res, width = 40, height = 20, units = "cm", dpi = 400)
 

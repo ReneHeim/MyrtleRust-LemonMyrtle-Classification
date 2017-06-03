@@ -1,0 +1,104 @@
+** VSURF results **
+The results object is a list of length around 20.
+Most interesting components are the following:
+
+  name                description                                       
+1 "$varselect.thres"  "variables selected after thesholding step"       
+2 "$varselect.interp" "variables selected after interpretation step"    
+3 "$varselect.pred"   "variables selected after prediction step"        
+4 "$ord.imp$x"        "mean VI in decreasing order for all variables"   
+5 "$ord.imp$ix"       "indices of the ordering of all variables VI mean"
+6 "mean.perf"         "mean OOB rate for RF build on all variables"     
+
+ For more information about VSURF outputs see the VSURF help page
+** VSURF results **
+The results object is a list of length around 20.
+Most interesting components are the following:
+
+  name                description                                       
+1 "$varselect.thres"  "variables selected after thesholding step"       
+2 "$varselect.interp" "variables selected after interpretation step"    
+3 "$varselect.pred"   "variables selected after prediction step"        
+4 "$ord.imp$x"        "mean VI in decreasing order for all variables"   
+5 "$ord.imp$ix"       "indices of the ordering of all variables VI mean"
+6 "mean.perf"         "mean OOB rate for RF build on all variables"     
+
+ For more information about VSURF outputs see the VSURF help page
+** VSURF results **
+The results object is a list of length around 20.
+Most interesting components are the following:
+
+  name                description                                       
+1 "$varselect.thres"  "variables selected after thesholding step"       
+2 "$varselect.interp" "variables selected after interpretation step"    
+3 "$varselect.pred"   "variables selected after prediction step"        
+4 "$ord.imp$x"        "mean VI in decreasing order for all variables"   
+5 "$ord.imp$ix"       "indices of the ordering of all variables VI mean"
+6 "mean.perf"         "mean OOB rate for RF build on all variables"     
+
+ For more information about VSURF outputs see the VSURF help page
+** VSURF results **
+The results object is a list of length around 20.
+Most interesting components are the following:
+
+  name                description                                       
+1 "$varselect.thres"  "variables selected after thesholding step"       
+2 "$varselect.interp" "variables selected after interpretation step"    
+3 "$varselect.pred"   "variables selected after prediction step"        
+4 "$ord.imp$x"        "mean VI in decreasing order for all variables"   
+5 "$ord.imp$ix"       "indices of the ordering of all variables VI mean"
+6 "mean.perf"         "mean OOB rate for RF build on all variables"     
+
+ For more information about VSURF outputs see the VSURF help page
+** VSURF results **
+The results object is a list of length around 20.
+Most interesting components are the following:
+
+  name                description                                       
+1 "$varselect.thres"  "variables selected after thesholding step"       
+2 "$varselect.interp" "variables selected after interpretation step"    
+3 "$varselect.pred"   "variables selected after prediction step"        
+4 "$ord.imp$x"        "mean VI in decreasing order for all variables"   
+5 "$ord.imp$ix"       "indices of the ordering of all variables VI mean"
+6 "mean.perf"         "mean OOB rate for RF build on all variables"     
+
+ For more information about VSURF outputs see the VSURF help page
+** VSURF results **
+The results object is a list of length around 20.
+Most interesting components are the following:
+
+  name                description                                       
+1 "$varselect.thres"  "variables selected after thesholding step"       
+2 "$varselect.interp" "variables selected after interpretation step"    
+3 "$varselect.pred"   "variables selected after prediction step"        
+4 "$ord.imp$x"        "mean VI in decreasing order for all variables"   
+5 "$ord.imp$ix"       "indices of the ordering of all variables VI mean"
+6 "mean.perf"         "mean OOB rate for RF build on all variables"     
+
+ For more information about VSURF outputs see the VSURF help page
+** VSURF results **
+The results object is a list of length around 20.
+Most interesting components are the following:
+
+  name                description                                       
+1 "$varselect.thres"  "variables selected after thesholding step"       
+2 "$varselect.interp" "variables selected after interpretation step"    
+3 "$varselect.pred"   "variables selected after prediction step"        
+4 "$ord.imp$x"        "mean VI in decreasing order for all variables"   
+5 "$ord.imp$ix"       "indices of the ordering of all variables VI mean"
+6 "mean.perf"         "mean OOB rate for RF build on all variables"     
+
+ For more information about VSURF outputs see the VSURF help page
+** VSURF results **
+The results object is a list of length around 20.
+Most interesting components are the following:
+
+  name                description                                       
+1 "$varselect.thres"  "variables selected after thesholding step"       
+2 "$varselect.interp" "variables selected after interpretation step"    
+3 "$varselect.pred"   "variables selected after prediction step"        
+4 "$ord.imp$x"        "mean VI in decreasing order for all variables"   
+5 "$ord.imp$ix"       "indices of the ordering of all variables VI mean"
+6 "mean.perf"         "mean OOB rate for RF build on all variables"     
+
+ For more information about VSURF outputs see the VSURF help page
