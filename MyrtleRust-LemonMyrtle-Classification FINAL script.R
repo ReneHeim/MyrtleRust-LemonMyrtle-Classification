@@ -1,5 +1,5 @@
 ####
-# 0. Script Description
+# Script Description
 ####
 
 # This script contains the full analysis for the first chapter of my PhD: Myrtle Rust (Puccinia
@@ -20,18 +20,14 @@ library(fda) # For Outlier detection
 library(fda.usc) # For Outlier detection
 library(prospectr) # For spectral binning
 library(gdata) #To drop levels of a df
-library(HDclassif)
 library(caret)
 library(reshape2)
 library(gridExtra)
 library(cowplot)
-library(RColorBrewer)
 library(VSURF)
 library(colourpicker)
-library(fitdistrplus)
 library(png)
 library(grid)
-library(rlist)
 library(qpcR)
 library(tidyverse)
 
@@ -41,16 +37,17 @@ data.original <- read.csv('Input_for_C1_AllSpectraABGPlantation_LeafClip.csv', a
 # 2. Cleaning the Original Data (Removing outlier, removing noise and spectral binning)
 ####
 
-# 2.1 Removing noisy ends from electromagnetic spectrum
+# 2.1 Removing noisy ends from electromagnetic spectrum (500:2500)
+start <- match('500', names(data.original)) #Find start wavelength
+end <- match('2500', names(data.original)) #Find end wavelength
 
-names(data.original[,c(3,2153)])  #Check start and end before rmv
-data.rmv.noise <- data.original[,153:2153]
-names(data.rmv.noise[,c(1,2001)]) #Check bands after rmv
+data.rmv.noise <- data.original[,start:end] #to find correct bands according to col name use match('500',names(x))
 
-Type <- data.original$Type #Get response variable back 
+Type <- data.original$Type #Get response variables back 
 
 data.wo.noise <- cbind(Type,data.rmv.noise)
 
+#stopifnot(colnames(data.wo.noise[2])=='500' $ colnames(rev(data.wo.noise)[1])=='2500')
 
 # 2.2 Remove outlier using fda package
 
@@ -187,10 +184,10 @@ TvsU.D <- RFsubset(data4RF.clean.1stDeri,"Healthy")
 
 DerivativeSpectra_Results <- list()
 
-PrimarySpectra_Results[[1]] <- RFapply(data4RF.clean.1stDeri,repeats=1,trees=1,seq(1,70,5))
-PrimarySpectra_Results[[2]] <- RFapply(HvsT.D,repeats=1,trees=1,mtry=seq(1,70,5))
-PrimarySpectra_Results[[3]] <- RFapply(HvsU.D,repeats=1,trees=1,mtry=seq(1,70,5))
-PrimarySpectra_Results[[4]] <- RFapply(TvsU.D,repeats=1,trees=1,mtry=seq(1,70,5))
+DerivativeSpectra_Results[[1]] <- RFapply(data4RF.clean.1stDeri,repeats=1,trees=1,seq(1,70,5))
+DerivativeSpectra_Results[[2]] <- RFapply(HvsT.D,repeats=1,trees=1,mtry=seq(1,70,5))
+DerivativeSpectra_Results[[3]] <- RFapply(HvsU.D,repeats=1,trees=1,mtry=seq(1,70,5))
+DerivativeSpectra_Results[[4]] <- RFapply(TvsU.D,repeats=1,trees=1,mtry=seq(1,70,5))
 
 lapply(DerivativeSpectra_Results, function(i){  capture.output( print(i) , file="20170528_Results_DerivativeSpectra.txt", append=TRUE)})
 
@@ -224,7 +221,7 @@ VSURF.Results[[4]] <- VSURF(Planta.Prim[,2:202], Planta.Deri[,1], clusterType = 
 
 # 5.3 Save results 
 
-lapply(VSURF.Results, function(i){  capture.output( print(i) , file="20170603_Results_VSURF.txt", append=TRUE)})
+# Something is wrong here?! lapply(VSURF.Results$varselect.pred, function(i){  capture.output( print(i) , file="20170603_Results_VSURF.txt", append=TRUE)})
 
 saveRDS(VSURF.Results, "VSURF.Results.rds")
 VSURF.Results <- readRDS('VSURF.Results.rds')
@@ -259,12 +256,12 @@ p1 <-ggplot(Full.Deri.gg, aes(Wavelength, Reflectance, colour = Type))+
         annotate("text", x= 570, y= 5, label="VIS", fontface="bold")+
         annotate("text", x= 1000, y= 5, label="NIR", fontface="bold")+
         annotate("text", x= 1900, y= 5, label="SWIR", fontface="bold")+
-        geom_vline(xintercept = features.FullDeri, col = "red", linetype = "solid", size = 1, alpha=.5)+
+        geom_vline(xintercept = features.FullDeri, col = "#98999E", linetype = "twodash", size = 1, alpha=.5)+
         geom_line(size=1)+
         theme_bw()+
         scale_x_continuous(breaks=seq(500,2500,300))+
         labs(x="Wavelength [nm]", y="1st Derivative Reflectance")+
-        scale_color_manual(values=c("navy", "dodgerblue", "purple3"))+
+        scale_color_manual(values=c("#01010A", "#4B9FCC", "#F07171"))+
         scale_y_continuous()+
         theme(legend.text = element_text(colour="black", size = 12, face = "bold"))+
         theme(legend.title = element_text(colour="black", size=12, face="bold"))+
@@ -290,12 +287,12 @@ p2 <- ggplot(Full.Prim.gg, aes(Wavelength, Reflectance, colour = Type))+
         annotate("text", x= 570, y= 25, label="VIS",  fontface="bold")+
         annotate("text", x= 1000, y= 25, label="NIR",  fontface="bold")+
         annotate("text", x= 1900, y= 25, label="SWIR",  fontface="bold")+
-        geom_vline(xintercept = features.FullPrim, col = "red", linetype = "solid", size = 1, alpha=.5)+
+        geom_vline(xintercept = features.FullPrim, col = "#98999E", linetype = "twodash", size = 1, alpha=.5)+
         geom_line(size=1)+
         theme_bw()+
         scale_x_continuous(breaks=seq(500,2500,300))+
         labs(x="Wavelength [nm]", y="Reflectance [%]")+
-        scale_color_manual(values=c("navy", "dodgerblue", "purple3"))+
+        scale_color_manual(values=c("#01010A", "#4B9FCC", "#F07171"))+
         scale_y_continuous()+
         theme(legend.text = element_text(colour="black", size = 12, face = "bold"))+
         theme(legend.title = element_text(colour="black", size=12, face="bold"))+
@@ -321,12 +318,12 @@ p3 <- ggplot(Planta.Deri.gg, aes(Wavelength, Reflectance, colour = Type))+
         annotate("text", x= 570, y= 5, label="VIS",  fontface="bold")+
         annotate("text", x= 1000, y= 5, label="NIR",  fontface="bold")+
         annotate("text", x= 1900, y= 5, label="SWIR",  fontface="bold")+
-        geom_vline(xintercept = features.PlantaDeri, col = "red", linetype = "solid", size = 1, alpha=.5)+
+        geom_vline(xintercept = features.PlantaDeri, col = "#98999E", linetype = "twodash", size = 1, alpha=.5)+
         geom_line(size=1)+
         theme_bw()+
         scale_x_continuous(breaks=seq(500,2500,300))+
         labs(x="Wavelength [nm]", y="1st Derivative Reflectance")+
-        scale_color_manual(values=c("navy", "dodgerblue", "purple3"))+
+        scale_color_manual(values=c("#4B9FCC", "#F07171"))+
         scale_y_continuous()+
         theme(legend.text = element_text(colour="black", size = 12, face = "bold"))+
         theme(legend.title = element_text(colour="black", size=12, face="bold"))+
@@ -352,12 +349,12 @@ p4 <- ggplot(Planta.Prim.gg, aes(Wavelength, Reflectance, colour = Type))+
         annotate("text", x= 570, y= 25, label="VIS",  fontface="bold" )+
         annotate("text", x= 1000, y= 25, label="NIR",  fontface="bold")+
         annotate("text", x= 1900, y= 25, label="SWIR",  fontface="bold")+
-        geom_vline(xintercept = features.PlantaPrim, col = "red", linetype = "solid", size = 1, alpha=.5)+
+        geom_vline(xintercept = features.PlantaPrim, col = "#98999E", linetype = "twodash", size = 1, alpha=.5)+
         geom_line(size=1)+
         theme_bw()+
         scale_x_continuous(breaks=seq(500,2500,300))+
         labs(x="Wavelength [nm]", y="Reflectance [%]")+
-        scale_color_manual(values=c("navy", "dodgerblue", "purple3"))+
+        scale_color_manual(values=c("#4B9FCC", "#F07171"))+
         scale_y_continuous()+
         theme(legend.text = element_text(colour="black", size = 12, face = "bold"))+
         theme(legend.title = element_text(colour="black", size=12, face="bold"))+
