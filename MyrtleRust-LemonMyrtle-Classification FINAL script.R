@@ -38,7 +38,7 @@ data.original <- read.csv('Input_for_C1_AllSpectraABGPlantation_LeafClip.csv', a
 ####
 
 # 2.1 Removing noisy ends from electromagnetic spectrum (500:2500)
-start <- match('501', names(data.original)) #Find start wavelength
+start <- match('500', names(data.original)) #Find start wavelength
 end <- match('2500', names(data.original)) #Find end wavelength
 
 data.rmv.noise <- data.original[,start:end] #to find correct bands according to col name use match('500',names(x))
