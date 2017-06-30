@@ -20,18 +20,16 @@ library(fda) # For Outlier detection
 library(fda.usc) # For Outlier detection
 library(prospectr) # For spectral binning
 library(gdata) #To drop levels of a df
-library(caret)
 library(reshape2)
-library(gridExtra)
 library(cowplot)
 library(VSURF)
 library(colourpicker)
-library(png)
-library(grid)
-library(qpcR)
 library(tidyverse)
+library(caret)
+library(randomForest)
+dir.create("output", FALSE, FALSE)
 
-data.original <- read.csv('Input_for_C1_AllSpectraABGPlantation_LeafClip.csv', as.is = TRUE, check.names = FALSE)
+data.original <- read.csv('data/Input_for_C1_AllSpectraABGPlantation_LeafClip.csv', as.is = TRUE, check.names = FALSE)
 
 ####
 # 2. Cleaning the Original Data (Removing outlier, removing noise and spectral binning)
@@ -56,29 +54,29 @@ data.wo.noise.mat <- as.matrix(data.wo.noise[,2:2002]) #As matrix to be able to 
 #Create fdata object
 
 labnames <- list(main="With", xlab="Wavelength [nm]", ylab="Reflectance [%]") #labnames to have plot information within fdata object
-myfdata <- fdata(data.wo.noise.mat, argvals = as.integer(names(data.wo.noise[,2:2002])), names = labnames) #Why as integer??
+myfdata <- fdata(data.wo.noise.mat, argvals = as.integer(names(data.wo.noise[,2:2002])), names = labnames)
 
 #Removing outliers
 
 outlier.mat <- outliers.depth.trim(myfdata, dfunc = depth.FM, nb = 10, smo = 0.1, trim = 0.06)
 
-saveRDS(outlier.mat, "outlier.object.rds")
-outlier.mat <- readRDS('outlier.object.rds')
+saveRDS(outlier.mat, "output/outlier.object.rds")
+outlier.mat <- readRDS('output/outlier.object.rds')
 
-#Create fdata object and substract outlier
+#Create fdata object and remove outlier
 
 labnames.out <- list(main="Out", xlab="Wavelength [nm]", ylab="Reflectance [%]")
 myfdata.out <- fdata(data.wo.noise.mat,argvals=as.integer(names(data.wo.noise[,2:2002])), names=labnames.out)
 myfdata.out <- myfdata[-as.integer(outlier.mat$outliers), ] 
 
-#pdf("Compare including and without Outlier.pdf", width = 16, height = 9)
+pdf("output/Compare including and without Outlier.pdf", width = 16, height = 9)
 
 par(mfrow=c(1,2))
 
 plot(myfdata)
 plot(myfdata.out)
 
-#dev.off()
+dev.off()
 
 #Create a dataframe and remove outlier for further pre-processing
 
@@ -87,15 +85,14 @@ data.wo.noise.for.resampling <- data.wo.noise[-outlier.vector, ]
 
 # 2.4 Spectral resampling
 
-Type2 <- data.wo.noise.for.resampling[,1]
+Type <- data.wo.noise.for.resampling[,1]
 data.resamp<-data.wo.noise.for.resampling[,2:2002] #removing Type column
 data.bin <- binning(data.resamp, bin.size=10)
-data.after.bin <- cbind(Type2, as.data.frame(data.bin))
-data.after.bin <- dplyr::rename(data.after.bin, Type = Type2)
+data.after.bin <- cbind(Type, as.data.frame(data.bin))
 
 # 2.5 Writing final file without outlier for classification
 
-write.csv(data.after.bin, 'data.wo.out.binned.cut.csv', row.names=FALSE)
+write.csv(data.after.bin, 'output/data.wo.out.binned.cut.csv', row.names=FALSE)
 
 ####
 # 3. Transforming spectra into 1st order derivatives and store dataframe
@@ -103,7 +100,8 @@ write.csv(data.after.bin, 'data.wo.out.binned.cut.csv', row.names=FALSE)
 
 # 3.1 Create data for spectral library
 
-data.new = as.matrix(setNames(data.frame(t(data.after.bin[,-1])), data.after.bin[,1]))
+data.new = t(data.after.bin[,-1])
+colnames(data.new) <- data.after.bin[,1]
 rownames(data.new) <-  c()
 
 # 3.2 Create wavelength object for spectral library
@@ -112,8 +110,8 @@ Wavelength <- colnames(data.after.bin[,2:202])
 Wavelength <- as.numeric(Wavelength)
 
 # 3.3 Create spectral library "spectra"
-
-spectra <- speclib(data.new,Wavelength)
+# NB -- have investigated warning here and it is fine
+spectra <- suppressWarnings(speclib(data.new,Wavelength))
 
 # 3.4 Create attribute object for spectra
 mat <- as.matrix(data.after.bin$Type)
@@ -135,13 +133,14 @@ He.D <- subset(d1, Type == "Healthy")
 Tr.D <- subset(d1, Type == "Treated")
 Un.D <- subset(d1, Type == "Untreated")
 
-plot(d1)#to test if functional
+plot(d1 )#to test if functional
 
 data.derivative <- as.data.frame(d1@spectra@spectra_ma)
 names(data.derivative) <- d1@wavelength
-Type <- attributes$Type
+
+Type <- attribute(spectra)$Type
 derivative.data <- cbind(Type, data.derivative)
-write.csv(derivative.data, '1st.Derivative.Spectra.cleaned.csv', row.names=FALSE)
+write.csv(derivative.data, 'output/1st.Derivative.Spectra.cleaned.csv', row.names=FALSE)
 
 ################################################################################################
 
@@ -150,11 +149,11 @@ write.csv(derivative.data, '1st.Derivative.Spectra.cleaned.csv', row.names=FALSE
 ####
 
 
-data4RF.clean.normal <- read.csv('data.wo.out.binned.cut.csv')
-data4RF.clean.1stDeri <- read.csv('1st.Derivative.Spectra.cleaned.csv')
+data4RF.clean.normal <- read.csv('output/data.wo.out.binned.cut.csv')
+data4RF.clean.1stDeri <- read.csv('output/1st.Derivative.Spectra.cleaned.csv')
 
-source('RandomForest_May2017.r') #data split 80:20 as default
-source('DropCatVar_Type_RF_May2017.R')
+source('R/RandomForest_May2017.r') #data split 80:20 as default
+source('R/DropCatVar_Type_RF_May2017.R')
 
 
 # 4.1 Apply RF on primary spectra
@@ -171,7 +170,7 @@ PrimarySpectra_Results[[2]] <- RFapply(HvsT,repeats=1,trees=1,mtry=seq(1,70,5))
 PrimarySpectra_Results[[3]] <- RFapply(HvsU,repeats=1,trees=1,mtry=seq(1,70,5))
 PrimarySpectra_Results[[4]] <- RFapply(TvsU,repeats=1,trees=1,mtry=seq(1,70,5))
 
-lapply(PrimarySpectra_Results, function(i){  capture.output( print(i) , file="20170528_Results_PrimarySpectra.txt", append=TRUE)})
+tmp <- lapply(PrimarySpectra_Results, function(i){  capture.output( print(i) , file="output/20170528_Results_PrimarySpectra.txt", append=TRUE)})
 
 
 
@@ -189,7 +188,7 @@ DerivativeSpectra_Results[[2]] <- RFapply(HvsT.D,repeats=1,trees=1,mtry=seq(1,70
 DerivativeSpectra_Results[[3]] <- RFapply(HvsU.D,repeats=1,trees=1,mtry=seq(1,70,5))
 DerivativeSpectra_Results[[4]] <- RFapply(TvsU.D,repeats=1,trees=1,mtry=seq(1,70,5))
 
-lapply(DerivativeSpectra_Results, function(i){  capture.output( print(i) , file="20170528_Results_DerivativeSpectra.txt", append=TRUE)})
+tmp <- lapply(DerivativeSpectra_Results, function(i){  capture.output( print(i) , file="output/20170528_Results_DerivativeSpectra.txt", append=TRUE)})
 
 ######################################################################################
 
@@ -201,12 +200,12 @@ lapply(DerivativeSpectra_Results, function(i){  capture.output( print(i) , file=
 # and also only on classes present on the plantation (Treated and Infected).
 ####
 
-source('DropCatVar_Type_RF_May2017.R')
+source('R/DropCatVar_Type_RF_May2017.R')
 
 # 5.1 Take the subsetted data from 4.1 and 4.2 to get four datasets
 
-Full.Deri <- read.csv('1st.Derivative.Spectra.cleaned.csv')
-Full.Prim <- read.csv('data.wo.out.binned.cut.csv')
+Full.Deri <- read.csv('output/1st.Derivative.Spectra.cleaned.csv')
+Full.Prim <- read.csv('output/data.wo.out.binned.cut.csv')
         
 Planta.Deri <- RFsubset(Full.Deri,"Healthy")
 Planta.Prim <- RFsubset(Full.Prim,"Healthy")        
@@ -220,22 +219,21 @@ VSURF.Results[[3]] <- VSURF(Planta.Deri[,2:202], Planta.Deri[,1], clusterType = 
 VSURF.Results[[4]] <- VSURF(Planta.Prim[,2:202], Planta.Deri[,1], clusterType = "FORK", ntree = 2000, mtry = 50)
 
 # 5.3 Save results 
+tmp <- lapply(VSURF.Results, function(i){  capture.output( print(i$varselect.pred) , file="output/20170603_Results_VSURF.txt", append=TRUE)})
 
-# Something is wrong here?! lapply(VSURF.Results$varselect.pred, function(i){  capture.output( print(i) , file="20170603_Results_VSURF.txt", append=TRUE)})
-
-saveRDS(VSURF.Results, "VSURF.Results.rds")
-VSURF.Results <- readRDS('VSURF.Results.rds')
+saveRDS(VSURF.Results, "output/VSURF.Results.rds")
+VSURF.Results <- readRDS('output/VSURF.Results.rds')
 
 # 5.4 Prepare ggplot (Figure X)
 
-source('prepgg_June2017.R')
+source('R/prepgg_June2017.R')
 
 Full.Deri.gg <- prep.gg(Full.Deri)# needs wide dataset 
 Full.Prim.gg <- prep.gg(Full.Prim)
 Planta.Deri.gg <- prep.gg(Planta.Deri)
 Planta.Prim.gg <- prep.gg(Planta.Prim)
 
-source('export_VSURF_June2017.R')
+source('R/export_VSURF_June2017.R')
 
 features.FullDeri <- export.VSURF(VSURF.Results[[1]]$varselect.pred, Full.Deri[,2:202])
 features.FullPrim <- export.VSURF(VSURF.Results[[2]]$varselect.pred, Full.Deri[,2:202])
@@ -369,5 +367,5 @@ p4 <- ggplot(Planta.Prim.gg, aes(Wavelength, Reflectance, colour = Type))+
 
 plot.res <- plot_grid(p2, p4, p1, p3, labels=c("A", "B", 'C', 'D'), ncol = 2, nrow = 2)
 
-ggsave("SpectraCompare_June2017.pdf", plot=plot.res, width = 40, height = 20, units = "cm", dpi = 400)
+ggsave("output/SpectraCompare_June2017.pdf", plot=plot.res, width = 40, height = 20, units = "cm", dpi = 400)
 
