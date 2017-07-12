@@ -221,8 +221,8 @@ VSURF.Results[[4]] <- VSURF(Planta.Prim[,2:202], Planta.Deri[,1], clusterType = 
 # 5.3 Save results 
 tmp <- lapply(VSURF.Results, function(i){  capture.output( print(i$varselect.pred) , file="output/20170603_Results_VSURF.txt", append=TRUE)})
 
-saveRDS(VSURF.Results, "output/VSURF.Results.rds")
-VSURF.Results <- readRDS('output/VSURF.Results.rds')
+saveRDS(VSURF.Results, "output/VSURF.Results.2.rds")
+VSURF.Results <- readRDS('output/VSURF.Results.2.rds')
 
 # 5.4 Prepare ggplot (Figure X)
 
@@ -240,58 +240,66 @@ features.FullPrim <- export.VSURF(VSURF.Results[[2]]$varselect.pred, Full.Deri[,
 features.PlantaDeri <- export.VSURF(VSURF.Results[[3]]$varselect.pred, Full.Deri[,2:202])
 features.PlantaPrim <- export.VSURF(VSURF.Results[[4]]$varselect.pred, Full.Deri[,2:202])
 
+
+levels(Full.Deri.gg$Type)[levels(Full.Deri.gg$Type)=="Treated"] <- "Uninfected"
+levels(Full.Deri.gg$Type)[levels(Full.Deri.gg$Type)=="Untreated"] <- "Infected"
+
+levels(Full.Prim.gg$Type)[levels(Full.Prim.gg$Type)=="Treated"] <- "Uninfected"
+levels(Full.Prim.gg$Type)[levels(Full.Prim.gg$Type)=="Unreated"] <- "Infected"
+
+levels(Planta.Deri.gg$Type)[levels(Planta.Deri.gg$Type)=="Treated"] <- "Uninfected"
+levels(Planta.Deri.gg$Type)[levels(Planta.Deri.gg$Type)=="Untreated"] <- "Infected"
+
+levels(Planta.Prim.gg$Type)[levels(Planta.Prim.gg$Type)=="Treated"] <- "Uninfected"
+levels(Planta.Prim.gg$Type)[levels(Planta.Prim.gg$Type)=="Untreated"] <- "Infected"
+
 # 5.5 Prepare vlines from features
 
 p1 <-ggplot(Full.Deri.gg, aes(Wavelength, Reflectance, colour = Type))+
-        annotate("rect", xmin = 380, xmax = 450, ymin = -Inf, ymax = Inf, alpha = .2, fill='violet')+
-        annotate("rect", xmin = 450, xmax = 495, ymin = -Inf, ymax = Inf, alpha = .2, fill='blue')+
-        annotate("rect", xmin = 495, xmax = 570, ymin = -Inf, ymax = Inf, alpha = .2, fill='green')+
+        annotate("rect", xmin = 500, xmax = 570, ymin = -Inf, ymax = Inf, alpha = .2, fill='green')+
         annotate("rect", xmin = 570, xmax = 590, ymin = -Inf, ymax = Inf, alpha = .2, fill='yellow')+
-        annotate("rect", xmin = 590, xmax = 620, ymin = -Inf, ymax = Inf, alpha = .2, fill='orange')+
-        annotate("rect", xmin = 620, xmax = 720, ymin = -Inf, ymax = Inf, alpha = .2, fill='red')+
-        annotate("rect", xmin = 720, xmax = 1300, ymin = -Inf, ymax = Inf, alpha = .2, fill=c("#30070C"))+
-        annotate("rect", xmin = 1300, xmax = 2500, ymin = -Inf, ymax = Inf, alpha = .2, fill='black')+
-        annotate("text", x= 570, y= 5, label="VIS", fontface="bold")+
-        annotate("text", x= 1000, y= 5, label="NIR", fontface="bold")+
-        annotate("text", x= 1900, y= 5, label="SWIR", fontface="bold")+
-        geom_vline(xintercept = features.FullDeri, col = "#98999E", linetype = "twodash", size = 1, alpha=.5)+
-        geom_line(size=1)+
+        annotate("rect", xmin = 590, xmax = 610, ymin = -Inf, ymax = Inf, alpha = .2, fill='orange')+
+        annotate("rect", xmin = 610, xmax = 700, ymin = -Inf, ymax = Inf, alpha = .2, fill=c("red"))+
+        annotate("rect", xmin = 700, xmax = 1300, ymin = -Inf, ymax = Inf, alpha = .2, fill=c("lightgrey"))+
+        annotate("rect", xmin = 1300, xmax = 2500, ymin = -Inf, ymax = Inf, alpha = .2, fill='white')+
+        annotate("text", x= 600, y= 5, label="VIS", fontface="bold", size=5)+
+        annotate("text", x= 1000, y= 5, label="NIR", fontface="bold", size=5)+
+        annotate("text", x= 1900, y= 5, label="SWIR", fontface="bold", size=5)+
+        geom_vline(xintercept = features.FullDeri, col = "black", linetype = "twodash", size = 1, alpha=.5)+
+        geom_line(size=.2)+
         theme_bw()+
-        scale_x_continuous(breaks=seq(500,2500,300))+
+        scale_x_continuous(breaks=seq(500,2500,150),expand = c(0, 0))+
+        scale_y_continuous(expand = c(0, 0))+
         labs(x="Wavelength [nm]", y="1st Derivative Reflectance")+
-        scale_color_manual(values=c("#01010A", "#4B9FCC", "#F07171"))+
-        scale_y_continuous()+
+        scale_color_manual(values=c("#30D17E", "#030003", "#FF00FF"))+
         theme(legend.text = element_text(colour="black", size = 12, face = "bold"))+
         theme(legend.title = element_text(colour="black", size=12, face="bold"))+
         theme(axis.text = element_text(colour = "black",size=12))+  
         theme(axis.title.y = element_text(size = 12, angle = 90,face="bold"))+
         theme(axis.title.x = element_text(size = 12,face="bold"))+
-        #theme(axis.title.x=element_blank(), axis.text.x=element_blank(), axis.ticks.x=element_blank())+
         theme(legend.position="bottom")+
-        #ggtitle("The Channon+ABG MA") + 
-        theme(plot.title = element_text(lineheight=.8, face="bold", size = 12))
+        theme(plot.title = element_text(lineheight=.8, face="bold", size = 12)) 
+        
 
 p1
 
 p2 <- ggplot(Full.Prim.gg, aes(Wavelength, Reflectance, colour = Type))+
-        annotate("rect", xmin = 380, xmax = 450, ymin = -Inf, ymax = Inf, alpha = .2, fill='violet')+
-        annotate("rect", xmin = 450, xmax = 495, ymin = -Inf, ymax = Inf, alpha = .2, fill='blue')+
-        annotate("rect", xmin = 495, xmax = 570, ymin = -Inf, ymax = Inf, alpha = .2, fill='green')+
+        annotate("rect", xmin = 500, xmax = 570, ymin = -Inf, ymax = Inf, alpha = .2, fill='green')+
         annotate("rect", xmin = 570, xmax = 590, ymin = -Inf, ymax = Inf, alpha = .2, fill='yellow')+
-        annotate("rect", xmin = 590, xmax = 620, ymin = -Inf, ymax = Inf, alpha = .2, fill='orange')+
-        annotate("rect", xmin = 620, xmax = 720, ymin = -Inf, ymax = Inf, alpha = .2, fill='red')+
-        annotate("rect", xmin = 720, xmax = 1300, ymin = -Inf, ymax = Inf, alpha = .2, fill=c("#30070C"))+
-        annotate("rect", xmin = 1300, xmax = 2500, ymin = -Inf, ymax = Inf, alpha = .2, fill='black')+
-        annotate("text", x= 570, y= 25, label="VIS",  fontface="bold")+
-        annotate("text", x= 1000, y= 25, label="NIR",  fontface="bold")+
-        annotate("text", x= 1900, y= 25, label="SWIR",  fontface="bold")+
-        geom_vline(xintercept = features.FullPrim, col = "#98999E", linetype = "twodash", size = 1, alpha=.5)+
-        geom_line(size=1)+
+        annotate("rect", xmin = 590, xmax = 610, ymin = -Inf, ymax = Inf, alpha = .2, fill='orange')+
+        annotate("rect", xmin = 610, xmax = 700, ymin = -Inf, ymax = Inf, alpha = .2, fill=c("red"))+
+        annotate("rect", xmin = 700, xmax = 1300, ymin = -Inf, ymax = Inf, alpha = .2, fill=c("lightgrey"))+
+        annotate("rect", xmin = 1300, xmax = 2500, ymin = -Inf, ymax = Inf, alpha = .2, fill='white')+
+        annotate("text", x= 600, y= 30, label="VIS", fontface="bold", size=5)+
+        annotate("text", x= 1000, y= 30, label="NIR", fontface="bold", size=5)+
+        annotate("text", x= 1900, y= 30, label="SWIR", fontface="bold", size=5)+
+        geom_vline(xintercept = features.FullPrim, col = "black", linetype = "twodash", size = 1, alpha=.5)+
+        geom_line(size=.2)+
         theme_bw()+
-        scale_x_continuous(breaks=seq(500,2500,300))+
+        scale_x_continuous(breaks=seq(500,2500,150),expand = c(0, 0))+
+        scale_y_continuous(expand = c(0, 0))+
         labs(x="Wavelength [nm]", y="Reflectance [%]")+
-        scale_color_manual(values=c("#01010A", "#4B9FCC", "#F07171"))+
-        scale_y_continuous()+
+        scale_color_manual(values=c("#30D17E", "#030003", "#FF00FF"))+
         theme(legend.text = element_text(colour="black", size = 12, face = "bold"))+
         theme(legend.title = element_text(colour="black", size=12, face="bold"))+
         theme(axis.text = element_text(colour = "black",size=12))+  
@@ -300,29 +308,27 @@ p2 <- ggplot(Full.Prim.gg, aes(Wavelength, Reflectance, colour = Type))+
         #theme(axis.title.x=element_blank(), axis.text.x=element_blank(), axis.ticks.x=element_blank())+
         theme(legend.position="none")+
         #ggtitle("Plantation + Botanical Garden") + 
-        theme(plot.title = element_text(lineheight=.8, face="bold", size = 12))
+        theme(plot.title = element_text(lineheight=.8, face="bold", size = 12))+ coord_cartesian(xlim = c(650, 750))
 
 p2
 
 p3 <- ggplot(Planta.Deri.gg, aes(Wavelength, Reflectance, colour = Type))+
-        annotate("rect", xmin = 380, xmax = 450, ymin = -Inf, ymax = Inf, alpha = .2, fill='violet')+
-        annotate("rect", xmin = 450, xmax = 495, ymin = -Inf, ymax = Inf, alpha = .2, fill='blue')+
-        annotate("rect", xmin = 495, xmax = 570, ymin = -Inf, ymax = Inf, alpha = .2, fill='green')+
+        annotate("rect", xmin = 500, xmax = 570, ymin = -Inf, ymax = Inf, alpha = .2, fill='green')+
         annotate("rect", xmin = 570, xmax = 590, ymin = -Inf, ymax = Inf, alpha = .2, fill='yellow')+
-        annotate("rect", xmin = 590, xmax = 620, ymin = -Inf, ymax = Inf, alpha = .2, fill='orange')+
-        annotate("rect", xmin = 620, xmax = 720, ymin = -Inf, ymax = Inf, alpha = .2, fill='red')+
-        annotate("rect", xmin = 720, xmax = 1300, ymin = -Inf, ymax = Inf, alpha = .2, fill=c("#30070C"))+
-        annotate("rect", xmin = 1300, xmax = 2500, ymin = -Inf, ymax = Inf, alpha = .2, fill='black')+
-        annotate("text", x= 570, y= 5, label="VIS",  fontface="bold")+
-        annotate("text", x= 1000, y= 5, label="NIR",  fontface="bold")+
-        annotate("text", x= 1900, y= 5, label="SWIR",  fontface="bold")+
-        geom_vline(xintercept = features.PlantaDeri, col = "#98999E", linetype = "twodash", size = 1, alpha=.5)+
-        geom_line(size=1)+
+        annotate("rect", xmin = 590, xmax = 610, ymin = -Inf, ymax = Inf, alpha = .2, fill='orange')+
+        annotate("rect", xmin = 610, xmax = 700, ymin = -Inf, ymax = Inf, alpha = .2, fill=c("red"))+
+        annotate("rect", xmin = 700, xmax = 1300, ymin = -Inf, ymax = Inf, alpha = .2, fill=c("lightgrey"))+
+        annotate("rect", xmin = 1300, xmax = 2500, ymin = -Inf, ymax = Inf, alpha = .2, fill='white')+
+        annotate("text", x= 600, y= 5, label="VIS", fontface="bold", size=5)+
+        annotate("text", x= 1000, y= 5, label="NIR", fontface="bold", size=5)+
+        annotate("text", x= 1900, y= 5, label="SWIR", fontface="bold", size=5)+
+        geom_vline(xintercept = features.PlantaDeri, col = "black", linetype = "twodash", size = 1, alpha=.5)+
+        geom_line(size=.2)+
         theme_bw()+
-        scale_x_continuous(breaks=seq(500,2500,300))+
+        scale_x_continuous(breaks=seq(500,2500,150),expand = c(0, 0))+
+        scale_y_continuous(expand = c(0, 0))+
         labs(x="Wavelength [nm]", y="1st Derivative Reflectance")+
-        scale_color_manual(values=c("#4B9FCC", "#F07171"))+
-        scale_y_continuous()+
+        scale_color_manual(values=c("#030003", "#FF00FF"))+
         theme(legend.text = element_text(colour="black", size = 12, face = "bold"))+
         theme(legend.title = element_text(colour="black", size=12, face="bold"))+
         theme(axis.text = element_text(colour = "black",size=12))+  
@@ -336,24 +342,22 @@ p3 <- ggplot(Planta.Deri.gg, aes(Wavelength, Reflectance, colour = Type))+
 p3
 
 p4 <- ggplot(Planta.Prim.gg, aes(Wavelength, Reflectance, colour = Type))+
-        annotate("rect", xmin = 380, xmax = 450, ymin = -Inf, ymax = Inf, alpha = .2, fill='violet')+
-        annotate("rect", xmin = 450, xmax = 495, ymin = -Inf, ymax = Inf, alpha = .2, fill='blue')+
-        annotate("rect", xmin = 495, xmax = 570, ymin = -Inf, ymax = Inf, alpha = .2, fill='green')+
+        annotate("rect", xmin = 500, xmax = 570, ymin = -Inf, ymax = Inf, alpha = .2, fill='green')+
         annotate("rect", xmin = 570, xmax = 590, ymin = -Inf, ymax = Inf, alpha = .2, fill='yellow')+
-        annotate("rect", xmin = 590, xmax = 620, ymin = -Inf, ymax = Inf, alpha = .2, fill='orange')+
-        annotate("rect", xmin = 620, xmax = 720, ymin = -Inf, ymax = Inf, alpha = .2, fill='red')+
-        annotate("rect", xmin = 720, xmax = 1300, ymin = -Inf, ymax = Inf, alpha = .2, fill=c("#30070C"))+
-        annotate("rect", xmin = 1300, xmax = 2500, ymin = -Inf, ymax = Inf, alpha = .2, fill='black')+
-        annotate("text", x= 570, y= 25, label="VIS",  fontface="bold" )+
-        annotate("text", x= 1000, y= 25, label="NIR",  fontface="bold")+
-        annotate("text", x= 1900, y= 25, label="SWIR",  fontface="bold")+
-        geom_vline(xintercept = features.PlantaPrim, col = "#98999E", linetype = "twodash", size = 1, alpha=.5)+
-        geom_line(size=1)+
+        annotate("rect", xmin = 590, xmax = 610, ymin = -Inf, ymax = Inf, alpha = .2, fill='orange')+
+        annotate("rect", xmin = 610, xmax = 700, ymin = -Inf, ymax = Inf, alpha = .2, fill=c("red"))+
+        annotate("rect", xmin = 700, xmax = 1300, ymin = -Inf, ymax = Inf, alpha = .2, fill=c("lightgrey"))+
+        annotate("rect", xmin = 1300, xmax = 2500, ymin = -Inf, ymax = Inf, alpha = .2, fill='white')+
+        annotate("text", x= 600, y= 30, label="VIS", fontface="bold", size=5)+
+        annotate("text", x= 1000, y= 30, label="NIR", fontface="bold", size=5)+
+        annotate("text", x= 1900, y= 30, label="SWIR", fontface="bold", size=5)+
+        geom_vline(xintercept = features.PlantaPrim, col = "black", linetype = "twodash", size = 1, alpha=.5)+
+        geom_line(size=.2)+
         theme_bw()+
-        scale_x_continuous(breaks=seq(500,2500,300))+
+        scale_x_continuous(breaks=seq(500,2500,150),expand = c(0, 0))+
+        scale_y_continuous(expand = c(0, 0))+
         labs(x="Wavelength [nm]", y="Reflectance [%]")+
-        scale_color_manual(values=c("#4B9FCC", "#F07171"))+
-        scale_y_continuous()+
+        scale_color_manual(values=c("#030003", "#FF00FF"))+
         theme(legend.text = element_text(colour="black", size = 12, face = "bold"))+
         theme(legend.title = element_text(colour="black", size=12, face="bold"))+
         theme(axis.text = element_text(colour = "black",size=12))+  
@@ -365,7 +369,7 @@ p4 <- ggplot(Planta.Prim.gg, aes(Wavelength, Reflectance, colour = Type))+
         theme(plot.title = element_text(lineheight=.8, face="bold", size = 12))
 
 
-plot.res <- plot_grid(p2, p4, p1, p3, labels=c("A", "B", 'C', 'D'), ncol = 2, nrow = 2)
-
-ggsave("output/SpectraCompare_June2017.pdf", plot=plot.res, width = 40, height = 20, units = "cm", dpi = 400)
+plot.res.2 <- plot_grid(p2, p4, p1, p3, labels=c("A", "B", 'C', 'D'), ncol = 2, nrow = 2)
+plot.res.2
+ggsave("output/FeatureSelectionPlot_July2017_Vers2.pdf", plot=plot.res.2, width = 40, height = 20, units = "cm", dpi = 400)
 
