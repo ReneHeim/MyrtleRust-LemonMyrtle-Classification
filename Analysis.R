@@ -369,7 +369,7 @@ p4 <- ggplot(Planta.Prim.gg, aes(Wavelength, Reflectance, colour = Type))+
         theme(plot.title = element_text(lineheight=.8, face="bold", size = 12))
 
 
-plot.res.2 <- plot_grid(p2, p4, p1, p3, labels=c("A", "B", 'C', 'D'), ncol = 2, nrow = 2)
-plot.res.2
-ggsave("output/FeatureSelectionPlot_July2017_Vers2.pdf", plot=plot.res.2, width = 40, height = 20, units = "cm", dpi = 400)
+plot.res <- plot_grid(p2, p4, p1, p3, labels=c("A", "B", 'C', 'D'), ncol = 2, nrow = 2)
+plot.res
+ggsave("output/FeatureSelectionPlot_July2017_Vers2.pdf", plot=plot.res, width = 40, height = 20, units = "cm", dpi = 400)
 

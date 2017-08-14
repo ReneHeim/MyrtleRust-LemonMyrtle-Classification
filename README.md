@@ -8,9 +8,9 @@ This repository contains code needed to reproduce the article:
 
 Raw data used in the analysis are provided in the file `data/Input_for_C1_AllSpectraABGPlantation_LeafClip.csv`. This file contains the following columns:
 
-- Type: XXX
-- Wavelength: XXXX
-- 350,351,....,2500: Each column contains values of .... at the specified wavelength in (units).
+- Type: Categorical variables referring to spectral class to be classified.
+- Wavelength: Contains class IDs -> ABG = Australian Botanical Garden Mount Annan, Treated = Fungicide treated plants plantation, Untreated = Untreated plants plantation
+- 350,351,....,2500: Each column contains values of spectral reflectance at the specified wavelength in [%].
 
 ## Instructions
 
