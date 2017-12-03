@@ -1,4 +1,4 @@
-##This repository contains code needed to reproduce the article:
+## This repository contains code needed to reproduce the article:
 
 **Heim RHJ, Wright IJ, Chang HC, Carnegie A, Pegg G, Lancaster EK, Falster DS and Oldeland J** Detecting Myrtle Rust (*Austropuccinia psidii*) on lemon myrtle trees using spectral signatures and machine learning. *In review.*
 
