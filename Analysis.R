@@ -2,7 +2,7 @@
 # Script Description
 ####
 
-# This script contains the full analysis for the first chapter of my PhD: Myrtle Rust (Puccinia
+# This script contains the full analysis for the first chapter of my PhD: Myrtle Rust (Austrouccinia
 # psidii) Classification on Lemon Myrtle (Backhousia citriodora). All following steps will be 
 # commented.
 
@@ -221,8 +221,8 @@ VSURF.Results[[4]] <- VSURF(Planta.Prim[,2:202], Planta.Deri[,1], clusterType = 
 # 5.3 Save results 
 tmp <- lapply(VSURF.Results, function(i){  capture.output( print(i$varselect.pred) , file="output/20170603_Results_VSURF.txt", append=TRUE)})
 
-saveRDS(VSURF.Results, "output/VSURF.Results.2.rds")
-VSURF.Results <- readRDS('output/VSURF.Results.2.rds')
+saveRDS(VSURF.Results, "output/VSURF.Results.rds")
+VSURF.Results <- readRDS('output/VSURF.Results.rds')
 
 # 5.4 Prepare ggplot (Figure X)
 
@@ -240,18 +240,23 @@ features.FullPrim <- export.VSURF(VSURF.Results[[2]]$varselect.pred, Full.Deri[,
 features.PlantaDeri <- export.VSURF(VSURF.Results[[3]]$varselect.pred, Full.Deri[,2:202])
 features.PlantaPrim <- export.VSURF(VSURF.Results[[4]]$varselect.pred, Full.Deri[,2:202])
 
+tmp.bands <- capture.output(sort(features.FullDeri), file = 'output/bands.txt')
+tmp.bands.2 <- capture.output(sort(features.FullPrim), file = 'output/bands.txt', append = TRUE)
+tmp.bands.3 <- capture.output(sort(features.PlantaDeri), file = 'output/bands.txt', append = TRUE)
+tmp.bands.4 <- capture.output(sort(features.PlantaPrim), file = 'output/bands.txt', append = TRUE)
 
-levels(Full.Deri.gg$Type)[levels(Full.Deri.gg$Type)=="Treated"] <- "Uninfected"
-levels(Full.Deri.gg$Type)[levels(Full.Deri.gg$Type)=="Untreated"] <- "Infected"
 
-levels(Full.Prim.gg$Type)[levels(Full.Prim.gg$Type)=="Treated"] <- "Uninfected"
-levels(Full.Prim.gg$Type)[levels(Full.Prim.gg$Type)=="Unreated"] <- "Infected"
+levels(Full.Deri.gg$Type)[levels(Full.Deri.gg$Type)=="Healthy"] <- "Naïve"
 
-levels(Planta.Deri.gg$Type)[levels(Planta.Deri.gg$Type)=="Treated"] <- "Uninfected"
-levels(Planta.Deri.gg$Type)[levels(Planta.Deri.gg$Type)=="Untreated"] <- "Infected"
 
-levels(Planta.Prim.gg$Type)[levels(Planta.Prim.gg$Type)=="Treated"] <- "Uninfected"
-levels(Planta.Prim.gg$Type)[levels(Planta.Prim.gg$Type)=="Untreated"] <- "Infected"
+levels(Full.Prim.gg$Type)[levels(Full.Prim.gg$Type)=="Healthy"] <- "Naïve"
+
+
+levels(Planta.Deri.gg$Type)[levels(Planta.Deri.gg$Type)=="Healthy"] <- "Naïve"
+
+
+levels(Planta.Prim.gg$Type)[levels(Planta.Prim.gg$Type)=="Healthy"] <- "Naïve"
+
 
 # 5.5 Prepare vlines from features
 
@@ -308,7 +313,7 @@ p2 <- ggplot(Full.Prim.gg, aes(Wavelength, Reflectance, colour = Type))+
         #theme(axis.title.x=element_blank(), axis.text.x=element_blank(), axis.ticks.x=element_blank())+
         theme(legend.position="none")+
         #ggtitle("Plantation + Botanical Garden") + 
-        theme(plot.title = element_text(lineheight=.8, face="bold", size = 12))+ coord_cartesian(xlim = c(650, 750))
+        theme(plot.title = element_text(lineheight=.8, face="bold", size = 12))
 
 p2
 
@@ -369,7 +374,8 @@ p4 <- ggplot(Planta.Prim.gg, aes(Wavelength, Reflectance, colour = Type))+
         theme(plot.title = element_text(lineheight=.8, face="bold", size = 12))
 
 
-plot.res <- plot_grid(p2, p4, p1, p3, labels=c("A", "B", 'C', 'D'), ncol = 2, nrow = 2)
+plot.res <- plot_grid(p2, p4, p1, p3, labels=c("a", "b", 'c', 'd'), ncol = 2, nrow = 2)
 plot.res
-ggsave("output/FeatureSelectionPlot_July2017_Vers2.pdf", plot=plot.res, width = 40, height = 20, units = "cm", dpi = 400)
+ggsave("output/FeatureSelectionPlot_August2017.pdf", plot=plot.res, width = 40, height = 20, units = "cm", dpi = 400)
+
 
