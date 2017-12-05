@@ -16,7 +16,6 @@ See the article at: LINK
 		- Type: Categorical variables referring to spectral class to be classified.
 		- Wavelength: Contains class IDs -> ABG = Australian Botanical Garden Mount Annan, Treated = Fungicide treated plants plantation, Untreated = Untreated plants plantation
 		- 350,351,....,2500: Each column contains values of spectral reflectance at the specified wavelength in [%].
-3. For access to the used packages and versions, see *packrat* folder or [packages](https://github.com/paternogbc/2015_Rohr_et_al_JAEcol/tree/master/packrat)  
     
 ***
 When using the [raw data](https://github.com/ReneHeim/MyrtleRust-LemonMyrtle-Classification/blob/master/data/Input_for_C1_AllSpectraABGPlantation_LeafClip.csv), please cite the original publication.
@@ -36,4 +35,8 @@ install.packages(c("hsdar", "fda", "fda.usc", "prospectr", "gdata", "reshape2", 
 To recreate the results, run the commands in the file `analysis.R`. To achieve this [download this repository](https://github.com/reneheim/myrtlerust-lemonmyrtle-classification/archive/master.zip), and then open an R session with working directory set to the root of the project.
 
 
-Note: This is the first analysis I have made fully reproducible and contains what I would consider now some antiquated coding. But it works!
+Note: 
+
++ This is the first analysis I have made fully reproducible and contains what I would consider now some antiquated coding. But it works!
++ Table 1 A and B has been created based on the analysis output of 4.1 and 4.2
++ Table 2 A and B has been created based on the analysis output of 5.2
