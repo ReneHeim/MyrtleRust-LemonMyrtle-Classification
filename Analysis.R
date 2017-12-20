@@ -24,7 +24,7 @@ library(randomForest) # Classification
 source("R/DropCatVar_Type_RF_May2017.R")
 source("R/export_VSURF_June2017.R")
 source("R/FUN_cutWL_December2017.R")
-source("R/prepgg_June2017.R")
+source("R/prepgg_December2017.R")
 source("R/RandomForest_May2017.R") # data split 80:20 as default
 
 dir.create("output", FALSE, FALSE) # Creates folder for generated results
