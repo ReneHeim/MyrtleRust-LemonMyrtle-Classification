@@ -1,12 +1,15 @@
 ####
-# Script Description
+# The following code reproduces the results of the article:
+# Heim RHJ, Wright IJ, Chang HC, Carnegie A, Pegg G, Lancaster EK, Falster DS and Oldeland J 
+# Detecting myrtle rust (Austropuccinia psidii) on lemon myrtle trees using spectral signatures 
+# and machine learning. (Accepted in Plant Pathology: 29.12.2017)
+#
+# The article was published based on my first PhD project and I am happy to get feedback to improve 
+# my analysis and coding skills.
 ####
 
-# This script contains the full analysis for the first chapter of my PhD: Myrtle Rust
-#(Austrouccinia psidii) Classification on Lemon Myrtle (Backhousia citriodora).
-# All following steps will be commented.
+# 1. Loading packages, functions and raw data -------------------------------------------------------
 
-# 1. Loading packages and raw data -------------------------------------------
 
 library(hsdar) # Creating spectral libraries
 library(fda) # Outlier detection
@@ -20,6 +23,7 @@ library(colourpicker) # Plotting
 library(tidyverse) # Plotting and data manipulation
 library(caret) # Classification
 library(randomForest) # Classification
+library(e1071)
 
 source("R/DropCatVar_Type_RF_May2017.R")
 source("R/export_VSURF_June2017.R")
@@ -27,19 +31,21 @@ source("R/FUN_cutWL_December2017.R")
 source("R/prepgg_December2017.R")
 source("R/RandomForest_May2017.R") # data split 80:20 as default
 
-dir.create("output", FALSE, FALSE) # Creates folder for generated results
-dir.create("data", FALSE, FALSE)
-dir.create("docs", FALSE, FALSE)
-dir.create("R", FALSE, FALSE)
+# Setup project structure
+
+dir.create("output", FALSE, FALSE) # will contain plots and classification output 
+dir.create("data", FALSE, FALSE) # contains raw data, DO NOT MODIFY OUTSIDE OF R
+dir.create("R", FALSE, FALSE) # contains functions
 
 data.original <-
         read.csv(
                 'data/Input_for_C1_AllSpectraABGPlantation_LeafClip.csv',
                 as.is = TRUE,
                 check.names = FALSE
-        ) # Data must contain a 1st col named "Type" (Response Var), 2nd col Wavelength (Spectra origin) and all the following labelled according to wavelength (500,501,502...)
+        ) # Data must contain a 1st col named "Type" (Response Var), 2nd col Wavelength 
+          # (Spectra origin) and all the following labelled according to wavelength (500,501,502...)
 
-# 2. Cleaning raw data (removing outlier, removing noise)  --------
+# 2. Cleaning raw data (removing outlier, removing noise) -------------------------------------------
 
 
 # 2.1 Removing noisy ends from electromagnetic spectrum (500:2500)
@@ -93,8 +99,8 @@ plot(myfdata.out)
 dev.off() # Visualize outlier detection before and after to check if functional
 
 outlier.vector <- as.numeric(outlier.mat$outliers)
-data.wo.noise.for.resampling <- data.wo.noise[-outlier.vector,] # Final df created that no longer contains functional outliers
-
+data.wo.noise.for.resampling <- data.wo.noise[-outlier.vector,] # Final df created that no longer 
+                                                                # contains functional outliers
 # 2.4 Spectral resampling
 
 Type <- data.wo.noise.for.resampling[, 1]
@@ -110,7 +116,8 @@ write.csv(data.after.bin,
           row.names = FALSE)
 
 
-# 3. Transforming spectra into 1st order derivatives ----------------------
+# 3. Create spectral library and compute raw and first order derivative spectra ----------------------
+
 
 # 3.1 Create data for spectral library
 
@@ -154,18 +161,15 @@ write.csv(derivative.data,
           'output/1st.Derivative.Spectra.cleaned.csv',
           row.names = FALSE)
 
-################################################################################################
+# 4. Random Forest Classification on primary and 1st order derivative spectra -----------------------
 
-# 4. Random Forest Classification of Primary and 1st order derivat --------
 
 data4RF.clean.normal <-
         read.csv('output/data.wo.out.binned.cut.csv')
 data4RF.clean.1stDeri <-
         read.csv('output/1st.Derivative.Spectra.cleaned.csv')
 
-
 # 4.1 Apply RF on primary spectra
-
 
 HvsT <- RFsubset(data4RF.clean.normal, "Untreated")
 HvsU <- RFsubset(data4RF.clean.normal, "Treated")
@@ -175,23 +179,23 @@ PrimarySpectra_Results <- list()
 
 PrimarySpectra_Results[[1]] <-
         RFapply(data4RF.clean.normal,
-                repeats = 1, # Can be set manually
-                trees = 1, # Can be set manually
-                seq(1, 70, 5)) # Can be set manually
+                repeats = 100, # Can be set manually (100 repeats used in article)
+                trees = 2000, # Can be set manually (2000 trees used in the article)
+                seq(1, 70, 5)) # Can be set manually (52 mtry used in the article)
 PrimarySpectra_Results[[2]] <-
         RFapply(HvsT,
-                repeats = 1,# Can be set manually
-                trees = 1,# Can be set manually
+                repeats = 100,# Can be set manually
+                trees = 2000,# Can be set manually
                 mtry = seq(1, 70, 5))# Can be set manually
 PrimarySpectra_Results[[3]] <-
         RFapply(HvsU,
-                repeats = 1,# Can be set manually
-                trees = 1,# Can be set manually
+                repeats = 100,# Can be set manually
+                trees = 2000,# Can be set manually
                 mtry = seq(1, 70, 5))# Can be set manually
 PrimarySpectra_Results[[4]] <-
         RFapply(TvsU,
-                repeats = 1,# Can be set manually
-                trees = 1,# Can be set manually
+                repeats = 100,# Can be set manually
+                trees = 2000,# Can be set manually
                 mtry = seq(1, 70, 5))# Can be set manually
 
 tmp <-
@@ -200,9 +204,7 @@ tmp <-
                                        TRUE)
         })
 
-
-
-# 4.2 Apply RF on first order derivative spectra
+# 4.2 Apply RF on 1st order derivative spectra
 
 
 HvsT.D <- RFsubset(data4RF.clean.1stDeri, "Untreated")
@@ -213,23 +215,23 @@ DerivativeSpectra_Results <- list()
 
 DerivativeSpectra_Results[[1]] <-
         RFapply(data4RF.clean.1stDeri,
-                repeats = 1,# Can be set manually
-                trees = 1,# Can be set manually
-                seq(1, 70, 5))# Can be set manually
+                repeats = 100,# Can be set manually (100 repeats used in article)
+                trees = 2000,# Can be set manually (2000 trees used in the article)
+                seq(1, 70, 5))# Can be set manually (52 mtry used in the article)
 DerivativeSpectra_Results[[2]] <-
         RFapply(HvsT.D,
-                repeats = 1,# Can be set manually
-                trees = 1,# Can be set manually
+                repeats = 100,# Can be set manually
+                trees = 2000,# Can be set manually
                 mtry = seq(1, 70, 5))# Can be set manually
 DerivativeSpectra_Results[[3]] <-
         RFapply(HvsU.D,
-                repeats = 1,# Can be set manually
-                trees = 1,# Can be set manually
+                repeats = 100,# Can be set manually
+                trees = 2000,# Can be set manually
                 mtry = seq(1, 70, 5))# Can be set manually
 DerivativeSpectra_Results[[4]] <-
         RFapply(TvsU.D,
-                repeats = 1,# Can be set manually
-                trees = 1,# Can be set manually
+                repeats = 100,# Can be set manually
+                trees = 2000,# Can be set manually
                 mtry = seq(1, 70, 5))# Can be set manually
 
 tmp <-
@@ -239,14 +241,15 @@ tmp <-
         })
 
 # Table 1 A and B has been created based on the output of 4.1 and 4.2
-######################################################################################
 
-# 5. VSURF (Variable Selection using Random Forest) -----------------------
+
+
+# 5. VSURF (Variable Selection for high dimensional data using random forests) -----------------------
 
 ####
-# The feature selection will be applied on both, primary and first-order derivaive
-# spectra, and on all three classes (Healthy, Treated and Infected)
-# and also only on classes present on the plantation (Treated and Infected).
+# VSURF will be applied on both, primary and first-order derivative spectra. Further, on all three 
+# classes (Naive, Treated and Infected) and on classes present on the plantation 
+# (Treated and Infected).
 ####
 
 # 5.1 Take the subsetted data from 4.1 and 4.2 to get four datasets
@@ -266,7 +269,7 @@ VSURF.Results[[1]] <-
                 Full.Deri[, 2:202],
                 Full.Deri[, 1],
                 clusterType = "FORK",
-                ntree = 2000,
+                ntree = 2000,# (2000 trees used in the article)
                 mtry = 50
         )
 VSURF.Results[[2]] <-
@@ -274,7 +277,7 @@ VSURF.Results[[2]] <-
                 Full.Prim[, 2:202],
                 Full.Prim[, 1],
                 clusterType = "FORK",
-                ntree = 2000,
+                ntree = 2000, # (2000 trees used in the article)
                 mtry = 50
         )
 VSURF.Results[[3]] <-
@@ -282,7 +285,7 @@ VSURF.Results[[3]] <-
                 Planta.Deri[, 2:202],
                 Planta.Deri[, 1],
                 clusterType = "FORK",
-                ntree = 2000,
+                ntree = 2000,# (2000 trees used in the article)
                 mtry = 50
         )
 VSURF.Results[[4]] <-
@@ -290,7 +293,7 @@ VSURF.Results[[4]] <-
                 Planta.Prim[, 2:202],
                 Planta.Deri[, 1],
                 clusterType = "FORK",
-                ntree = 2000,
+                ntree = 2000,# (2000 trees used in the article)
                 mtry = 50
         )
 
@@ -308,7 +311,8 @@ VSURF.Results <- readRDS('output/VSURF.Results.rds')
 
 # Table 2 A and B has been created based on the output of 5.2
 
-# 6. Prepare Figure 2 -----------------------------------------------------
+
+# 6. Prepare Figure 2 -------------------------------------------------------------------------------
 
 # 6.1 Manipulate plot data
 
@@ -317,9 +321,10 @@ Full.Prim.gg <- prep.gg(Full.Prim)
 Planta.Deri.gg <- prep.gg(Planta.Deri)
 Planta.Prim.gg <- prep.gg(Planta.Prim)
 
+# Using VSURF result object to extract selected wavebands
 
 features.FullDeri <-
-        export.VSURF(VSURF.Results[[1]]$varselect.pred, Full.Deri[, 2:202]) # Takes VSURF results object extract selected wavebands
+        export.VSURF(VSURF.Results[[1]]$varselect.pred, Full.Deri[, 2:202]) 
 features.FullPrim <-
         export.VSURF(VSURF.Results[[2]]$varselect.pred, Full.Deri[, 2:202])
 features.PlantaDeri <-
@@ -446,7 +451,7 @@ p1 <-
                 size = 1,
                 alpha = .5
         ) +
-        geom_line(size = .2) +
+        geom_line(aes(linetype=Type),size = .2) +
         theme_bw() +
         scale_x_continuous(breaks = seq(500, 2500, 150), expand = c(0, 0)) +
         scale_y_continuous(expand = c(0, 0)) +
@@ -563,7 +568,7 @@ p2 <-
                 size = 1,
                 alpha = .5
         ) +
-        geom_line(size = .2) +
+        geom_line(aes(linetype=Type), size = .2) +
         theme_bw() +
         scale_x_continuous(breaks = seq(500, 2500, 150), expand = c(0, 0)) +
         scale_y_continuous(expand = c(0, 0)) +
@@ -681,7 +686,7 @@ p3 <-
                 size = 1,
                 alpha = .5
         ) +
-        geom_line(size = .2) +
+        geom_line(aes(linetype=Type), size = .2) +
         theme_bw() +
         scale_x_continuous(breaks = seq(500, 2500, 150), expand = c(0, 0)) +
         scale_y_continuous(expand = c(0, 0)) +
@@ -799,7 +804,7 @@ p4 <-
                 size = 1,
                 alpha = .5
         ) +
-        geom_line(size = .2) +
+        geom_line(aes(linetype=Type), size = .2) +
         theme_bw() +
         scale_x_continuous(breaks = seq(500, 2500, 150), expand = c(0, 0)) +
         scale_y_continuous(expand = c(0, 0)) +
@@ -849,3 +854,4 @@ ggsave(
         dpi = 400
 )
 
+#####################################################################################################
