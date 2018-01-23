@@ -4,7 +4,7 @@
 ## This repository contains code needed to reproduce the article:
 
 Heim, R. H. J., Wright, I. J., Chang, H.-C., Carnegie, A. J., Pegg, G. S., Lancaster, E. K., Falster, D. S. and Oldeland, J. (2018) 
-‘Detecting myrtle rust ( Austropuccinia psidii ) on lemon myrtle trees using spectral signatures and machine learning’, Plant Pathology, 12(10), pp. 3218–3221. doi: 10.1111/ppa.12830.
+Detecting myrtle rust ( Austropuccinia psidii ) on lemon myrtle trees using spectral signatures and machine learning, Plant Pathology, 12(10), pp. 3218?3221. doi: 10.1111/ppa.12830.
 
 Find the article [HERE](http://onlinelibrary.wiley.com/doi/10.1111/ppa.12830/full)
 ***
