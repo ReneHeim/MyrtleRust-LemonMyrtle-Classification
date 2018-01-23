@@ -1,3 +1,6 @@
+[![DOI](https://zenodo.org/badge/92111648.svg)](https://zenodo.org/badge/latestdoi/92111648)
+
+
 ## This repository contains code needed to reproduce the article:
 
 Heim, R. H. J., Wright, I. J., Chang, H.-C., Carnegie, A. J., Pegg, G. S., Lancaster, E. K., Falster, D. S. and Oldeland, J. (2018) 
